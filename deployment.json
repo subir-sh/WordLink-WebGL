@@ -1,12 +1,17 @@
 {
   "sourceRepository": "miniron-v/2026-Nexon-Gamejam",
-  "sourceCommit": "cc43b2398e61ff47f98e9b7173321145451de247",
+  "sourceCommit": "29c8c7aac9f253f5f47458111c6ac595cf2c179c",
   "unityVersion": "6000.5.5f1",
   "entryScene": "DailyPuzzle",
   "webGLTemplate": "FullWindow",
-  "builtAt": "2026-10-30T13:44:21.135Z",
+  "builtAt": "2026-10-30T14:14:02.749Z",
   "buildAdjustments": [
     "Normalize empty TagManager layer entries",
     "Skip standard draw/discard tutorial in daily puzzle mode"
+  ],
+  "features": [
+    "Browser clipboard copy with confirmed result",
+    "Persist and restore completed daily puzzle results",
+    "Leaderboard access after completion"
   ]
 }
