@@ -1,0 +1,12 @@
+{
+  "sourceRepository": "miniron-v/2026-Nexon-Gamejam",
+  "sourceCommit": "cc43b2398e61ff47f98e9b7173321145451de247",
+  "unityVersion": "6000.5.5f1",
+  "entryScene": "DailyPuzzle",
+  "webGLTemplate": "FullWindow",
+  "builtAt": "2026-10-30T13:44:21.135Z",
+  "buildAdjustments": [
+    "Normalize empty TagManager layer entries",
+    "Skip standard draw/discard tutorial in daily puzzle mode"
+  ]
+}

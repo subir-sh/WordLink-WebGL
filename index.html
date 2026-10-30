@@ -1,134 +1,149 @@
 <!DOCTYPE html>
-<html lang="en-us">
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Unity Web Player | WordLink</title>
-    <link rel="shortcut icon" href="TemplateData/favicon.ico">
-    <link rel="stylesheet" href="TemplateData/style.css">
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8936569039879498" crossorigin="anonymous"></script>
-  </head>
-  <body>
-    <div id="unity-container" class="unity-desktop">
-      <canvas id="unity-canvas" width=960 height=600 tabindex="-1"></canvas>
-      <div id="unity-loading-bar">
-        <div id="unity-logo"></div>
-        <div id="unity-progress-bar-empty">
-          <div id="unity-progress-bar-full"></div>
-        </div>
-      </div>
-      <div id="unity-warning"> </div>
-      <div id="unity-footer">
-        <div id="unity-logo-title-footer"></div>
-        <div id="unity-fullscreen-button"></div>
-        <div id="unity-build-title">WordLink</div>
-      </div>
-    </div>
-    <script>
-      var canvas = document.querySelector("#unity-canvas");
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes, viewport-fit=cover">
+  <title>WordLink</title>
+  <style>
+    /*
+     * FullWindow WebGL template
+     * - 브라우저 창(뷰포트) 전체를 게임 캔버스로 채움. 흰 여백/스크롤바 없음.
+     * - 창 크기가 바뀌면 캔버스 CSS 크기가 따라가고, Unity(matchWebGLToCanvasSize 기본값 true)가
+     *   매 프레임 렌더 해상도를 캔버스 크기 x devicePixelRatio 로 맞춘다.
+     */
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #231F20;
+    }
 
-      // Shows a temporary message banner/ribbon for a few seconds, or
-      // a permanent error message on top of the canvas if type=='error'.
-      // If type=='warning', a yellow highlight color is used.
-      // Modify or remove this function to customize the visually presented
-      // way that non-critical warnings and error messages are presented to the
-      // user.
-      function unityShowBanner(msg, type) {
-        var warningBanner = document.querySelector("#unity-warning");
-        function updateBannerVisibility() {
-          warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
-        }
-        var div = document.createElement('div');
-        div.innerHTML = msg;
-        warningBanner.appendChild(div);
-        if (type == 'error') div.style = 'background: red; padding: 10px;';
-        else {
-          if (type == 'warning') div.style = 'background: yellow; padding: 10px;';
-          setTimeout(function() {
-            warningBanner.removeChild(div);
-            updateBannerVisibility();
-          }, 5000);
-        }
-        updateBannerVisibility();
+    #unity-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      background: #231F20;
+      outline: none;
+      touch-action: none;          /* 모바일에서 스크롤/핀치줌 대신 게임 입력으로 */
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #unity-loading {
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: min(320px, 60vw);
+      pointer-events: none;
+    }
+
+    #unity-progress-bar {
+      height: 6px;
+      border-radius: 3px;
+      background: rgba(255, 255, 255, 0.15);
+      overflow: hidden;
+    }
+
+    #unity-progress-bar-full {
+      width: 0%;
+      height: 100%;
+      border-radius: 3px;
+      background: #ffffff;
+      transition: width 0.15s ease-out;
+    }
+
+    #unity-warning {
+      position: fixed;
+      left: 50%;
+      top: 8px;
+      transform: translateX(-50%);
+      max-width: calc(100% - 16px);
+      font: 14px/1.4 sans-serif;
+      display: none;
+      z-index: 10;
+    }
+
+    #unity-warning > div {
+      padding: 8px 12px;
+      margin-bottom: 4px;
+      border-radius: 4px;
+    }
+  </style>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8936569039879498" crossorigin="anonymous"></script>
+</head>
+<body>
+  <canvas id="unity-canvas" tabindex="-1"></canvas>
+  <div id="unity-loading">
+    <div id="unity-progress-bar"><div id="unity-progress-bar-full"></div></div>
+  </div>
+  <div id="unity-warning"></div>
+
+  <script>
+    var canvas = document.querySelector("#unity-canvas");
+    var loading = document.querySelector("#unity-loading");
+    var progressFull = document.querySelector("#unity-progress-bar-full");
+    var warningBanner = document.querySelector("#unity-warning");
+
+    // Unity 가 에러/경고를 표시할 때 사용하는 배너. type: 'error' | 'warning' | 'info'
+    function unityShowBanner(msg, type) {
+      function updateBannerVisibility() {
+        warningBanner.style.display = warningBanner.children.length ? "block" : "none";
       }
-
-      var buildUrl = "Build";
-      var loaderUrl = buildUrl + "/webgl-test.loader.js";
-      var config = {
-        arguments: [],
-        dataUrl: buildUrl + "/webgl-test.data",
-        frameworkUrl: buildUrl + "/webgl-test.framework.js",
-        codeUrl: buildUrl + "/webgl-test.wasm",
-        streamingAssetsUrl: "StreamingAssets",
-        companyName: "Yeonieum",
-        productName: "WordLink",
-        productVersion: "1.0.0",
-        showBanner: unityShowBanner,
-        // errorHandler: function(err, url, line) {
-        //    alert("error " + err + " occurred at line " + line);
-        //    // Return 'true' if you handled this error and don't want Unity
-        //    // to process it further, 'false' otherwise.
-        //    return true;
-        // },
-      };
-
-      // By default, Unity keeps WebGL canvas render target size matched with
-      // the DOM size of the canvas element (scaled by window.devicePixelRatio)
-      // Set this to false if you want to decouple this synchronization from
-      // happening inside the engine, and you would instead like to size up
-      // the canvas DOM size and WebGL render target sizes yourself.
-      // config.matchWebGLToCanvasSize = false;
-
-      // If you would like all file writes inside Unity Application.persistentDataPath
-      // directory to automatically persist so that the contents are remembered when
-      // the user revisits the site the next time, uncomment the following line:
-      // config.autoSyncPersistentDataPath = true;
-      // This autosyncing is currently not the default behavior to avoid regressing
-      // existing user projects that might rely on the earlier manual
-      // JS_FileSystem_Sync() behavior, but in future Unity version, this will be
-      // expected to change.
-
-      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-        // Mobile device style: fill the whole browser client area with the game canvas:
-
-        var meta = document.createElement('meta');
-        meta.name = 'viewport';
-        meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
-        document.getElementsByTagName('head')[0].appendChild(meta);
-        document.querySelector("#unity-container").className = "unity-mobile";
-        canvas.className = "unity-mobile";
-
-        // To lower canvas resolution on mobile devices to gain some
-        // performance, uncomment the following line:
-        // config.devicePixelRatio = 1;
-
-
-      } else {
-        // Desktop style: Render the game canvas in a window that can be maximized to fullscreen:
-        canvas.style.width = "960px";
-        canvas.style.height = "600px";
+      var div = document.createElement("div");
+      div.textContent = msg;
+      if (type == "error") div.style.background = "#ff4d4d";
+      else {
+        if (type == "warning") div.style.background = "#ffd24d";
+        else div.style.background = "#ffffff";
+        setTimeout(function () {
+          warningBanner.removeChild(div);
+          updateBannerVisibility();
+        }, 5000);
       }
+      warningBanner.appendChild(div);
+      updateBannerVisibility();
+    }
 
-      document.querySelector("#unity-loading-bar").style.display = "block";
+    var buildUrl = "Build";
+    var loaderUrl = buildUrl + "/Web.loader.js";
+    var config = {
+      arguments: [],
+      dataUrl: buildUrl + "/Web.data",
+      frameworkUrl: buildUrl + "/Web.framework.js",
+      codeUrl: buildUrl + "/Web.wasm",
+      streamingAssetsUrl: "StreamingAssets",
+      companyName: "Yeonieum",
+      productName: "WordLink",
+      productVersion: "1.0.0",
+      showBanner: unityShowBanner,
+      // 캔버스 CSS 크기에 맞춰 렌더 해상도를 자동으로 맞춤 (기본값 true, 명시).
+      matchWebGLToCanvasSize: true,
+      // 고해상도(HiDPI) 화면에서 렌더 부하가 크면 아래 주석을 풀어 픽셀 비율을 제한할 수 있음.
+      // devicePixelRatio: Math.min(window.devicePixelRatio || 1, 2),
+    };
 
-      var script = document.createElement("script");
-      script.src = loaderUrl;
-      script.onload = () => {
-        createUnityInstance(canvas, config, (progress) => {
-          document.querySelector("#unity-progress-bar-full").style.width = 100 * progress + "%";
-              }).then((unityInstance) => {
-                document.querySelector("#unity-loading-bar").style.display = "none";
-                document.querySelector("#unity-fullscreen-button").onclick = () => {
-                  unityInstance.SetFullscreen(1);
-                };
 
-              }).catch((message) => {
-                alert(message);
-              });
-            };
-
-      document.body.appendChild(script);
-
-    </script>
-  </body>
+    var script = document.createElement("script");
+    script.src = loaderUrl;
+    script.onload = function () {
+      createUnityInstance(canvas, config, function (progress) {
+        progressFull.style.width = 100 * progress + "%";
+      }).then(function (unityInstance) {
+        loading.style.display = "none";
+        // 콘솔/외부 스크립트에서 접근 가능하도록 노출 (예: unityInstance.SetFullscreen(1))
+        window.unityInstance = unityInstance;
+        canvas.focus();
+      }).catch(function (message) {
+        unityShowBanner(String(message), "error");
+      });
+    };
+    document.body.appendChild(script);
+  </script>
+</body>
 </html>
