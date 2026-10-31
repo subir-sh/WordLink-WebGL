@@ -1,15 +1,20 @@
 {
   "sourceRepository": "miniron-v/2026-Nexon-Gamejam",
-  "sourceCommit": "29c8c7aac9f253f5f47458111c6ac595cf2c179c",
+  "sourceCommit": "e511a1e360a5d0696a4a173821bd6fc522e91100",
   "unityVersion": "6000.5.5f1",
   "entryScene": "DailyPuzzle",
   "webGLTemplate": "FullWindow",
-  "builtAt": "2026-10-30T14:14:02.749Z",
+  "builtAt": "2026-10-31T08:26:30.126Z",
   "buildAdjustments": [
     "Normalize empty TagManager layer entries",
     "Skip standard draw/discard tutorial in daily puzzle mode"
   ],
+  "dailyTimeSource": "Unity Cloud Code: WordLinkDailyContext",
+  "kstDateSeedStartsAt": "2026-11-01T00:00:00+09:00",
+  "migration": "Preserve the published 2026-10-31 puzzle",
   "features": [
+    "Korean, English, Japanese with remote main settings UI",
+    "Server-authoritative KST date with retry on time lookup failure",
     "Browser clipboard copy with confirmed result",
     "Persist and restore completed daily puzzle results",
     "Leaderboard access after completion"
